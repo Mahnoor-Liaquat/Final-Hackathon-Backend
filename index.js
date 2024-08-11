@@ -1,45 +1,77 @@
+require("dotenv").config();
 const express = require("express");
+const colors = require("colors");
+const mongoose = require("mongoose");
+const morgan = require("morgan");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const stripePayment = require("./routes/stripePaymentRoutes");
-const jazzcashPayment = require('./routes/payment');
-const easypaisaPayment = require("./routes/qrcodeRoutes");
+const stripe = require("stripe")(
+  "sk_test_51Pg5eaRunlLVaZ2Qz31ndkSbxMlj66WYait44gI1xE5HHuEU6UCCxqUhSSqg956BL97pGKMjJbIjG1nK7aKCyyZD00lKHFIqiL"
+);
 
-const dotenv = require('dotenv');
-dotenv.config();
+const connectToDatabase = require("./config/db");
 
+// Import routes
+const authRoutes = require("./routes/authRoutes");
+const teacherRoutes = require("./routes/teacherRoutes");
+const studentsRoutes = require("./routes/studentsRoutes");
+const qrCodeRoutes = require("./routes/qrcodeRoutes");
+const paymentRoute = require("./routes/payment");
+
+// Rest object
 const app = express();
 
-app.use(bodyParser.json());
-app.use('/api/create-payment-intent', stripePayment); //stripe payment
-app.use('/api/jazzcash', jazzcashPayment); //jazzcash payment
-app.use('/api/qrcode/generate',easypaisaPayment); //easypaisa payment
-
-app.get('/api/test', (req, res) => {
-  res.send('Test endpoint is working!');
-});
-
-app.get('/', (req, res) => {
-  res.send('Backend is working properly!');
-});
-
-// Use CORS middleware
+// Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // Replace with your frontend URL
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify the allowed methods
-  allowedHeaders: ['Content-Type', 'Authorization'] // Specify the allowed headers
+  origin: 'http://localhost:5173/', // Replace with your frontend's domain
+  methods: ['GET', 'POST'], // Allowed methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
 }));
 
-const port = process.env.PORT || 3000;
+app.use(express.json());
+app.use(bodyParser.json());
+app.use(morgan("dev"));
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+
+// Routes
+app.use("/api/fee/portal", authRoutes);
+app.use("/api/fee/portal/teacher", teacherRoutes);
+app.use("/api/fee/portal/students", studentsRoutes);
+app.use("/api/qrcode", qrCodeRoutes); // Easypaisa
+app.use("/api/payment", paymentRoute); // JazzCash
+
+// Payment Intent Route (Stripe)
+app.post("/create-payment-intent", async (req, res) => {
+  const { amount } = req.body;
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: "usd",
+    });
+
+    res.status(200).send({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
 });
 
+// Root API
+app.get("/", (req, res) => {
+  res.send("<h1>Welcome to TechTitans Fee Portal</h1>");
+});
+
+// Database Connection
+connectToDatabase();
+
+// Port
+const Port = process.env.Port || 3000;
+
+// Run listening
+app.listen(Port, () => {
+  console.log(`Server is listening on port ${Port}`.bgWhite.black);
+});
+
+// For Vercel
 module.exports = app;
-
-
-
-
-
-
