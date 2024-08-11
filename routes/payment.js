@@ -3,7 +3,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 const router = express.Router();
 
-router.post('/api/jazzcash', async (req, res) => {
+router.post('/jazzcash', async (req, res) => {
   const { amount, customerEmail, customerPhone, name, course } = req.body;
 
   const pp_MerchantID = 'MC112922';
@@ -13,7 +13,7 @@ router.post('/api/jazzcash', async (req, res) => {
   const date = new Date();
   const pp_TxnDateTime = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}${String(date.getSeconds()).padStart(2, '0')}`;
   const pp_TxnExpiryDateTime = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate() + 1).padStart(2, '0')}${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}${String(date.getSeconds()).padStart(2, '0')}`;
-  const pp_Amount = (amount).toString();
+  const pp_Amount = (amount * 100).toString();
 
   // Secure Hash Generation
   const hashString = `${pp_Password}&${pp_Amount}&${pp_MerchantID}&${pp_TxnRefNo}&${pp_TxnDateTime}&${pp_ReturnURL}`;

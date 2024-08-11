@@ -2,7 +2,7 @@ const express = require('express');
 const { generateQRCode } = require('../services/qrcodeService');
 const router = express.Router();
 
-router.post('api/qrcode/generate', async (req, res) => {
+router.post('/generate', async (req, res) => {
   try {
     const { amount, phoneNumber } = req.body;
     const data = `Amount:${amount},Phone:${phoneNumber}`;
